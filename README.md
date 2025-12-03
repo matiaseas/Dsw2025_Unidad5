@@ -9,13 +9,13 @@ En este archivo tienes una variable de entorno llamada VITE_BACKEND_URL, debes c
 ## Las imagenes están basadas en una versión de un grupo que está cursando
 
 Agregar FilterProduct y ResponsePagination
-![alt text](image.png)
+![alt text](/readme-files/image.png)
 
 Agregar lógica en ProductsManagementService para soportar filtrado de status, busqueda por nombre y paginación
-![alt text](image-1.png)
+![alt text](/readme-files/image-1.png)
 
 Crear un nuevo endpoint ("api/products/admin") en PouductController que será utilizado desde el panel del Dashboard
-![alt text](image-2.png)
+![alt text](/readme-files/image-2.png)
 
 ## Pasos de instalación
 
