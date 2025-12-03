@@ -6,6 +6,7 @@ import Input from '../../shared/components/Input';
 import { createProduct } from '../services/create';
 import { useState } from 'react';
 import { frontendErrorMessage } from '../helpers/backendError';
+import toast from 'react-hot-toast';
 
 function CreateProductForm() {
   const {
@@ -30,6 +31,7 @@ function CreateProductForm() {
     try {
       await createProduct(formData);
 
+      toast.success('Producto creado exitosamente.', { duration: 3000 });
       navigate('/admin/products');
     } catch (error) {
       if (error.response?.data?.detail) {

@@ -7,6 +7,7 @@ function PaginationControls({
   setPageNumber,
   setPageSize,
   availableSizes = ['2', '10', '15', '20'],
+  className = '',
 }) {
   const handlePageSizeChange = (evt) => {
     // Cuando cambia el tamaño de página, siempre volvemos a la página 1.
@@ -15,7 +16,7 @@ function PaginationControls({
   };
 
   return (
-    <div className='flex justify-center items-center mt-3'>
+    <div className={`flex justify-center items-center mt-3 ${className}`}>
       {/* Botón ATRÁS */}
       <Button
         disabled={pageNumber === 1}

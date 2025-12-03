@@ -4,10 +4,17 @@ import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
 import UserLoginForm from '../../auth/components/UserLoginForm';
 import UserRegisterForm from '../../auth/components/UserRegisterForm';
-import { searchCustomerProducts } from '../../products/services/listCustomer';
+import { getActiveProductsPaginated } from '../../products/services/listCustomer';
 import { clearCart } from '../../products/Context/cartStorage';
+import toast from 'react-hot-toast';//cambios
+import PaginationControls from '../../shared/components/PaginationControls';
 
 export default function ClientDashboard() {
+  const [searchPageNumber, setSearchPageNumber] = useState(1);
+  const [searchPageSize, setSearchPageSize] = useState(5);
+  const [searchTotalItems, setSearchTotalItems] = useState(0);
+  const [searchTotalPages, setSearchTotalPages] = useState(1);
+
   const [openMenu, setOpenMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -24,6 +31,12 @@ export default function ClientDashboard() {
     `p-2 rounded-4xl transition hover:bg-gray-100 text-sm sm:text-base
      ${isActive ? 'bg-purple-200 hover:bg-purple-100' : ''}`
   );
+
+  useEffect(() => {
+    if (searchTerm.trim() !== '') {
+      handleSearch(searchPageNumber);
+    }
+  }, [searchPageNumber, searchPageSize]);
 
   const addToCart = (product) => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -61,20 +74,30 @@ export default function ClientDashboard() {
 
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (goToPage = searchPageNumber) => {
     if (!searchTerm) return;
 
     try {
       setLoading(true);
-      const { data, error } = await searchCustomerProducts(searchTerm);
+
+      const { data, pagination, error } = await getActiveProductsPaginated({
+        searchTerm,
+        pageNumber: goToPage,
+        pageSize: Number(searchPageSize) || 1,
+      });
 
       if (error) {
-
-        console.error('Error en búsqueda:', error);
+        console.error('Error en búsqueda paginada:', error);
         setSearchResults([]);
       } else {
         setSearchResults(data || []);
-        setCartVersion(v => v + 1);
+
+        // NO tocar pageNumber acá
+        setSearchTotalPages(
+          Math.ceil(pagination.totalItems / (Number(searchPageSize) || 1)),
+        );
+
+        setSearchTotalItems(pagination.totalItems);
       }
     } finally {
       setLoading(false);
@@ -110,6 +133,7 @@ export default function ClientDashboard() {
       if (userRole === 'Admin') {
         // Opcional: Podrías limpiar el carrito aquí si el Admin tiene productos en él
         clearCart();
+        toast.success('Bienvenido, Administrador', { duration: 3000 });
         navigate('/admin/home');
       }
     }
@@ -165,7 +189,11 @@ export default function ClientDashboard() {
               type="text"
               placeholder="Search"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setSearchPageNumber(1);      // RESETEAR
+              }}
+
               className="w-full border rounded-3xl px-3 py-2 pr-10 text-sm md:text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
@@ -202,7 +230,32 @@ export default function ClientDashboard() {
                 ) : searchResults.length === 0 ? (
                   <div className="p-2 text-gray-500 text-sm">No se encontraron productos</div>
                 ) : (
-                  searchResults.map(renderSearchResultItem)
+                  <>
+                    {/* Mostrar total de resultados */}
+                    <div className="p-2 text-gray-500 text-sm">
+                      Total de resultados: {searchTotalItems}
+                    </div>
+                    {searchResults.map(renderSearchResultItem)}
+                    {/* PAGINACIÓN */}
+                    <PaginationControls
+                      className="text-xs px-2 [&_button]:text-xs [&_button]:px-1 [&_button]:py-0.5
+                        [&_select]:text-xs [&_select]:p-0.5
+                        [&_span]:text-xs
+                        /*fuerza a que el contenedor permita bajar elementos */
+                        flex-wrap
+                        /*select baja y se centra */
+                        [&_select]:w-auto
+                        [&_select]:mt-2
+                        [&_select]:mx-auto"
+                      pageNumber={searchPageNumber}
+                      totalPages={searchTotalPages}
+                      pageSize={searchPageSize}
+                      setPageNumber={(v) => setSearchPageNumber(Number(v) || 1)}
+                      setPageSize={(v) => setSearchPageSize(Number(v) || 5)}
+                      availableSizes={['2', '5', '10', '15']}
+                    />
+
+                  </>
                 )}
               </div>
             )}

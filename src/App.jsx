@@ -12,6 +12,7 @@ import ShoppingCartPage from './modules/products/pages/ShoppingCartPage';
 import CartItem from './modules/products/components/CartItem';
 import ListProductCustomerPage from './modules/products/pages/ListProductCustomerPage';
 import RegisterForm from './modules/auth/components/RegisterForm';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   const router = createBrowserRouter([
@@ -67,6 +68,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <Toaster />
       <RouterProvider router={router} />
     </AuthProvider>
   );

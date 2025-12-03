@@ -7,6 +7,7 @@ import useAuth from '../../auth/hook/useAuth';
 import { useOutletContext } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import UserLoginForm from '../../auth/components/UserLoginForm';
+import toast from 'react-hot-toast';
 
 function ShoppingCartPage() {
   const [cartItems, setCartItems] = useState([]);
@@ -32,7 +33,7 @@ function ShoppingCartPage() {
     const cartItems = getCart();
 
     if (!customerId || cartItems.length === 0) {
-      alert('No se puede procesar la orden: faltan datos');
+      toast.error('No se puede procesar la orden: No se seleciono ningun producto.');
 
       return;
     }
@@ -56,10 +57,10 @@ function ShoppingCartPage() {
     if (data) {
       clearCart();
       setCartItems([]);
-      alert('Orden creada correctamente');
+      toast.success('¡Orden creada correctamente!', { duration: 3000 });
       navigate('/');
     } else {
-      alert(`Error al crear orden: ${error?.message}`);
+      toast.error(`Error al crear orden: ${error?.message}`);
     }
   }, [isAuthenticated, customerId, navigate]);
 
@@ -128,6 +129,7 @@ function ShoppingCartPage() {
       clearCart();
       setCartItems([]);
       setPendingCheckout(false);
+      toast.success('Bienvenido, Administrador', { duration: 3000 });
       navigate('/admin/home');
     }
   };
