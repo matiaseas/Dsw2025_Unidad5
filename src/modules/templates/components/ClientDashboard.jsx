@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import Button from '../../shared/components/Button';
 import useAuth from '../../auth/hook/useAuth';
@@ -6,7 +6,7 @@ import UserLoginForm from '../../auth/components/UserLoginForm';
 import UserRegisterForm from '../../auth/components/UserRegisterForm';
 import { getActiveProductsPaginated } from '../../products/services/listCustomer';
 import { clearCart } from '../../products/Context/cartStorage';
-import toast from 'react-hot-toast';//cambios
+import toast from 'react-hot-toast';
 import PaginationControls from '../../shared/components/PaginationControls';
 
 export default function ClientDashboard() {
@@ -32,49 +32,7 @@ export default function ClientDashboard() {
      ${isActive ? 'bg-purple-200 hover:bg-purple-100' : ''}`
   );
 
-  useEffect(() => {
-    if (searchTerm.trim() !== '') {
-      handleSearch(searchPageNumber);
-    }
-  }, [searchPageNumber, searchPageSize]);
-
-  const addToCart = (product) => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-    const { stockQuantity } = product;
-    const index = cart.findIndex((p) => p.id === product.id);
-
-    if (index >= 0) {
-      // El producto ya está en el carrito
-      const currentQuantity = cart[index].quantity;
-
-      if (currentQuantity >= stockQuantity) {
-        // 1. Evitar añadir si ya está al máximo de stock
-
-        return; // Detiene la función sin modificar el carrito
-      }
-
-      // 2. Si no ha alcanzado el límite, suma 1
-      cart[index].quantity += 1;
-
-    } else {
-      // El producto NO está en el carrito
-      if (stockQuantity <= 0) {
-        // Evitar añadir si el stock es cero o negativo
-
-        return;
-      }
-      // 3. Añadir con cantidad 1
-
-      cart.push({ ...product, quantity: 1 });
-    }
-
-    localStorage.setItem('cart', JSON.stringify(cart));
-    setCartVersion(v => v + 1);
-
-  };
-
-  const handleSearch = async (goToPage = searchPageNumber) => {
+  const handleSearch = useCallback(async (goToPage = searchPageNumber) => {
     if (!searchTerm) return;
 
     try {
@@ -87,12 +45,11 @@ export default function ClientDashboard() {
       });
 
       if (error) {
-        console.error('Error en búsqueda paginada:', error);
+        console.error(error);
         setSearchResults([]);
       } else {
         setSearchResults(data || []);
 
-        // NO tocar pageNumber acá
         setSearchTotalPages(
           Math.ceil(pagination.totalItems / (Number(searchPageSize) || 1)),
         );
@@ -102,6 +59,39 @@ export default function ClientDashboard() {
     } finally {
       setLoading(false);
     }
+  }, [searchTerm, searchPageNumber, searchPageSize]);
+
+  useEffect(() => {
+    if (searchTerm.trim() !== '') {
+      handleSearch(searchPageNumber);
+    }
+  }, [searchPageNumber, searchPageSize, handleSearch, searchTerm]);
+
+  const addToCart = (product) => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    const { stockQuantity } = product;
+    const index = cart.findIndex((p) => p.id === product.id);
+
+    if (index >= 0) {
+      const currentQuantity = cart[index].quantity;
+
+      if (currentQuantity >= stockQuantity) {
+        return;
+      }
+
+      cart[index].quantity += 1;
+
+    } else {
+      if (stockQuantity <= 0) {
+        return;
+      }
+
+      cart.push({ ...product, quantity: 1 });
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    setCartVersion(v => v + 1);
   };
 
   const renderSessionButtons = (mobile = false) => (
@@ -124,14 +114,10 @@ export default function ClientDashboard() {
   );
 
   useEffect(() => {
-    // 1. Verificar si el usuario está autenticado
     if (isAuthenticated) {
-      // 2. Obtener el rol (asumiendo que está en localStorage)
       const userRole = localStorage.getItem('role');
 
-      // 3. Si el rol es 'Admin', redirigir
       if (userRole === 'Admin') {
-        // Opcional: Podrías limpiar el carrito aquí si el Admin tiene productos en él
         clearCart();
         toast.success('Bienvenido, Administrador', { duration: 3000 });
         navigate('/admin/home');
@@ -170,19 +156,16 @@ export default function ClientDashboard() {
 
   return (
     <div className="min-h-screen grid grid-rows-[auto_1fr] bg-gray-50">
-      {/* Header */}
       <header className="flex items-center justify-between p-4 shadow rounded bg-white md:px-6 gap-4 flex-wrap">
         <div className="flex items-center">
           <span className="font-bold text-purple-700 text-lg">Tie</span>
         </div>
 
-        {/* Navegación */}
         <nav className="hidden md:flex justify-center gap-4 text-neutral-950 font-medium ml-auto mr-auto">
           <NavLink to="/" className={getLinkStyles}>Productos</NavLink>
           <NavLink to="/cart" className={getLinkStyles}>Carrito de compras</NavLink>
         </nav>
 
-        {/* Buscador */}
         <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-center gap-2 md:gap-6 px-2">
           <div className="relative w-full max-w-[280px] md:max-w-xs">
             <input
@@ -191,9 +174,8 @@ export default function ClientDashboard() {
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                setSearchPageNumber(1);      // RESETEAR
+                setSearchPageNumber(1);
               }}
-
               className="w-full border rounded-3xl px-3 py-2 pr-10 text-sm md:text-base bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             />
@@ -202,7 +184,7 @@ export default function ClientDashboard() {
               className="absolute top-1/2 right-3 sm:-translate-y-1/2 -translate-y-[25%]
                 p-0 m-0 border-none bg-transparent shadow-none
                text-gray-500 hover:text-blue-600 focus:outline-none"
-              onClick={handleSearch}
+              onClick={() => handleSearch(searchPageNumber)}
               aria-label="Buscar"
             >
               <svg
@@ -219,10 +201,8 @@ export default function ClientDashboard() {
                   strokeLinejoin="round"
                 />
               </svg>
-
             </button>
 
-            {/* Cuadro flotante de resultados */}
             {searchTerm && (
               <div className="absolute top-full left-0 mt-2 w-full bg-white border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                 {loading ? (
@@ -231,19 +211,15 @@ export default function ClientDashboard() {
                   <div className="p-2 text-gray-500 text-sm">No se encontraron productos</div>
                 ) : (
                   <>
-                    {/* Mostrar total de resultados */}
                     <div className="p-2 text-gray-500 text-sm">
                       Total de resultados: {searchTotalItems}
                     </div>
                     {searchResults.map(renderSearchResultItem)}
-                    {/* PAGINACIÓN */}
                     <PaginationControls
                       className="text-xs px-2 [&_button]:text-xs [&_button]:px-1 [&_button]:py-0.5
                         [&_select]:text-xs [&_select]:p-0.5
                         [&_span]:text-xs
-                        /*fuerza a que el contenedor permita bajar elementos */
                         flex-wrap
-                        /*select baja y se centra */
                         [&_select]:w-auto
                         [&_select]:mt-2
                         [&_select]:mx-auto"
@@ -254,7 +230,6 @@ export default function ClientDashboard() {
                       setPageSize={(v) => setSearchPageSize(Number(v) || 5)}
                       availableSizes={['2', '5', '10', '15']}
                     />
-
                   </>
                 )}
               </div>
@@ -262,7 +237,6 @@ export default function ClientDashboard() {
           </div>
         </div>
 
-        {/* Botones de sesión */}
         <div className="flex items-center gap-2">
           {renderSessionButtons()}
         </div>
@@ -271,11 +245,12 @@ export default function ClientDashboard() {
           <button
             className="md:hidden text-2xl"
             onClick={() => setOpenMenu(!openMenu)}
-          >{openMenu ? <span>&#215;</span> : <span>&#9776;</span>}
+          >
+            {openMenu ? <span>&#215;</span> : <span>&#9776;</span>}
           </button>
         </div>
       </header>
-      {/* Mobile menu */}
+
       {openMenu && (
         <nav className="fixed top-0 left-0 h-full w-full max-w-xs md:hidden bg-white shadow px-4 py-2 z-50 flex flex-col">
           <div className='mt-4 flex flex-col gap-2'>
@@ -287,9 +262,7 @@ export default function ClientDashboard() {
       )}
 
       {showLoginModal && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30 px-4">
-
           <div className="relative w-full max-w-md bg-white rounded-lg shadow-lg p-6 sm:p-8">
             <button
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
@@ -339,9 +312,9 @@ export default function ClientDashboard() {
           </div>
         </div>
       )}
-      {/* Main content */}
+
       <main className="p-5 overflow-y-scroll">
-        <Outlet context={{ cartVersion }}/>
+        <Outlet context={{ cartVersion }} />
       </main>
     </div>
   );
