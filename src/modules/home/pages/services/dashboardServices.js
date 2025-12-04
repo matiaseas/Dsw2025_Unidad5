@@ -1,14 +1,9 @@
 import { instance } from '../../../shared/api/axiosInstance';
 
 export const getOrderCount = async () => {
-  try {
-    const response = await instance.get('api/orders/count');
+  const response = await instance.get('api/orders/count');
 
-    return { data: response.data, error: null };
-  } catch (error) {
-    
-    return { data: null, error };
-  }
+  return { data: response.data, error: null };
 };
 
 export const getProductCount = async () => {
