@@ -8,7 +8,7 @@ function RegisterPage() {
       justify-center
       h-[100dvh]
       bg-neutral-100
-      sm:items-center
+      items-center
     '>
       <RegisterForm />
     </div>

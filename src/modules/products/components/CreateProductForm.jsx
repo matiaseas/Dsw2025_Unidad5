@@ -58,14 +58,20 @@ function CreateProductForm() {
       >
         <Input
           label='SKU'
+          placeholder='Ej: SKU-1001'
           error={errors.sku?.message}
           {...register('sku', {
             required: 'SKU es requerido',
+            pattern: {
+              value: /^SKU\d+$/,
+              message: 'El SKU debe comenzar con "SKU-" y continuar con números',
+            },
           })}
           className='h-10'
         />
         <Input
           label='Código Único'
+          placeholder='Ej: CUI-789'
           error={errors.cui?.message}
           {...register('cui', {
             required: 'Código Único es requerido',
@@ -74,6 +80,7 @@ function CreateProductForm() {
         />
         <Input
           label='Nombre'
+          placeholder='Ej: Tarjeta de Video RTX 4060'
           error={errors.name?.message}
           {...register('name', {
             required: 'Nombre es requerido',
@@ -82,11 +89,13 @@ function CreateProductForm() {
         />
         <Input
           label='Descripción'
+          placeholder='Ej: Modelo actualizado. Edición 2024.'
           {...register('description')}
           className='h-10'
         />
         <Input
           label='Precio'
+          placeholder='Ej: 150000'
           error={errors.price?.message}
           type='number'
           {...register('price', {
@@ -99,6 +108,7 @@ function CreateProductForm() {
         />
         <Input
           label='Stock'
+          placeholder='Ej: 50'
           error={errors.stock?.message}
           {...register('stock', {
             min: {

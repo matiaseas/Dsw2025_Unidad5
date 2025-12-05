@@ -13,6 +13,7 @@ import CartItem from './modules/products/components/CartItem';
 import ListProductCustomerPage from './modules/products/pages/ListProductCustomerPage';
 import RegisterForm from './modules/auth/components/RegisterForm';
 import { Toaster } from 'react-hot-toast';
+import RegisterPage from './modules/auth/pages/RegisterPage';
 
 function App() {
   const router = createBrowserRouter([
@@ -36,7 +37,7 @@ function App() {
     },
     {
       path: '/signup',
-      element: <RegisterForm />,
+      element: <RegisterPage />,
     },
     {
       path: '/admin',

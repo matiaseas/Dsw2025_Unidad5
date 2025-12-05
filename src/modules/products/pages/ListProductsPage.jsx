@@ -35,6 +35,9 @@ function ListProductsPage() {
       setProducts(data.productItems);
     } catch (error) {
       console.error(error);
+      setProducts([]);   // ← LIMPIA LA LISTA EN CASO DE ERROR
+      setTotal(0);       // ← PARA QUE totalPages dé 0
+
     } finally {
       setLoading(false);
     }
@@ -47,6 +50,7 @@ function ListProductsPage() {
   const totalPages = Math.ceil(total / pageSize);
 
   const handleSearch = async () => {
+    setPageNumber(1);
     await fetchProducts();
   };
 
@@ -91,15 +95,32 @@ function ListProductsPage() {
 
       <div className='mt-4 flex flex-col gap-4'>
         {
-          loading
-            ? <span>Buscando datos...</span>
-            : products.map(product => (
-              <Card key={product.sku}>
-                <h1 className=' font-semibold mb-2 text-lg'>{product.sku} - {product.name}</h1>
-                <p className='text-base'>Stock: {product.stockQuantity} - ${product.currentUnitPrice} - {product.isActive ? 'Activado' : 'Desactivado'}</p>
-              </Card>
-            ))
+          loading ? (
+            <span>Buscando datos...</span>
+          ) : (
+            <>
+              {products.length === 0 ? (
+                <div className='bg-white p-6 rounded-lg shadow-lg text-center text-gray-500'>
+                  <h2 className='text-xl font-semibold mb-2'>No se encontraron productos.</h2>
+                  <p>Ajusta el filtro o el término de búsqueda y vuelve a intentarlo.</p>
+                </div>
+              ) : (
+                products.map((product) => (
+                  <Card key={product.sku}>
+                    <h1 className='font-semibold mb-2 text-lg'>
+                      {product.sku} - {product.name}
+                    </h1>
+                    <p className='text-base'>
+                      Stock: {product.stockQuantity} - ${product.currentUnitPrice} -{' '}
+                      {product.isActive ? 'Activado' : 'Desactivado'}
+                    </p>
+                  </Card>
+                ))
+              )}
+            </>
+          )
         }
+
       </div>
 
       <PaginationControls
